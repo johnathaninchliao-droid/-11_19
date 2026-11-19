@@ -9,3 +9,5 @@
    - 包含 SSMS、PowerShell REST API、T-SQL 語法與 RDBMS 關聯式架構的完整技術指南。
 3. [客戶資料表建立範例與打字防呆檢查表 (SQL_客戶資料表範例.md)](./SQL_客戶資料表範例.md)
    - 包含客戶資料表建立語法、欄位型別選擇原因，以及中英文切換造成全形符號錯誤的對照表。
+4. [SQL 檔直接開啟版 (SQL_Customer_Table_Example.sql)](./SQL_Customer_Table_Example.sql)
+   - 可用 SSMS 的「檔案 → 開啟 → 檔案」直接開啟，不需貼上程式碼。
