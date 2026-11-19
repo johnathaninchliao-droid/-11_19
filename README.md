@@ -7,3 +7,5 @@
    - 包含老師教學脈絡、實戰除錯（BEGIN/END、批次變數宣告）、安全刪除/還原資料庫、8KB 分頁機制、型別防呆與重點速查口訣。
 2. [SQL 資料庫完全學習手冊 (SQL_Database_Complete_Guide.md)](./SQL_Database_Complete_Guide.md)
    - 包含 SSMS、PowerShell REST API、T-SQL 語法與 RDBMS 關聯式架構的完整技術指南。
+3. [客戶資料表建立範例與打字防呆檢查表 (SQL_客戶資料表範例.md)](./SQL_客戶資料表範例.md)
+   - 包含客戶資料表建立語法、欄位型別選擇原因，以及中英文切換造成全形符號錯誤的對照表。
