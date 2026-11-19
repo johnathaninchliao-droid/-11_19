@@ -9,6 +9,8 @@
 1. [資料庫條件約束（Constraint）](#一資料庫條件約束constraint)
 2. [取得另一個代理的對話紀錄](#二取得另一個代理的對話紀錄)
 3. [本次任務與待辦](#三本次任務與待辦)
+4. [客戶資料表建立與 SQL 除錯](#四客戶資料表建立與-sql-除錯後續問答)
+5. [輸入法與打字防呆快捷鍵](#五輸入法與打字防呆快捷鍵)
 
 ---
 
@@ -106,14 +108,119 @@ opencode api get "/api/experimental/session/<sessionID>/export?sanitize=true"
 
 ### 3.1 已完成的盤點
 - 目標 repo：`https://github.com/johnathaninchliao-droid/-11_19.git`
-  - 目前已有 `README.md`、`SQL_Class_Notes_20261119.md`、`SQL_Database_Complete_Guide.md`（由 Antigravity 整理）。
   - 遠端 `main` 分支原本只有一個 commit（`1c0ac62`）。
-- 本機 `C:\Users\User\Documents\多重代理` 的 `origin` 是另一個 repo（`agents_test_doc.git`），因此另外 clone 目標 repo 到暫存目錄再加入本檔，避免混到不同專案的歷史。
+  - 目前已包含：`README.md`、`SQL_Class_Notes_20261119.md`、`SQL_Database_Complete_Guide.md`（Antigravity 整理）、`OpenCode_Conversation_20261119.md`（本檔）、`SQL_客戶資料表範例.md`、`SQL_Customer_Table_Example.sql`。
+- 本機 `C:\Users\User\Documents\多重代理` 的 `origin` 是另一個 repo（`agents_test_doc.git`），因此另外 clone 目標 repo 到暫存目錄再加入檔案，避免混到不同專案的歷史。
 
 ### 3.2 待辦
 - [x] 整理 OpenCode 下午對話紀錄並加入目標 repo。
-- [ ] 使用者提供實際 SQL 語法與錯誤訊息後，逐條修正並整理成問題清單。
+- [x] 使用者提供實際 SQL 語法後，逐條修正並整理成問題清單（詳見第四節）。
+- [x] 補充中英文輸入法切換說明（詳見第五節）。
 
 ---
 
-*整理完成於 2026-11-19 | 來源：OpenCode 工作階段「資料庫條件約束」*
+## 四、客戶資料表建立與 SQL 除錯（後續問答）
+
+### 4.1 使用者貼出的原始語法
+
+```sql
+--check條件約束
+drop table 客戶
+go
+create table 客戶(
+    客戶編號 nchar(3) primary key,
+    名稱 nvarchar(30),
+    身分證號 nchar(10) unique ,
+    電話 nvarchar(10),
+    地址 nvarchar(50),
+)
+```
+
+### 4.2 問題對照表
+
+| # | 問題 | 影響 | 修正 |
+| :-- | :--- | :--- | :--- |
+| 1 | 最後一個欄位多逗號 `地址 nvarchar(50),` | `訊息 102 ... ',' 附近有語法錯誤` | 去掉最後那個 `,` |
+| 2 | 註解寫 `--check條件約束`，但沒有 `CHECK` | 老師要的檢查約束根本沒建立 | 補一段 `CHECK (...)` |
+| 3 | `DROP TABLE 客戶` 沒先檢查存在 | 第一次執行會報「物件名稱 '客戶' 無效」 | 用 `IF OBJECT_ID(...) IS NOT NULL` 包起來 |
+| 4 | 條件約束沒有命名 | 日後不易查找與修改 | 用 `CONSTRAINT [名稱]` 命名 |
+
+### 4.3 修正版（可直接執行）
+
+```sql
+-- check 條件約束：客戶編號必須是 1 個英文字 + 2 個數字，例如 C01
+IF OBJECT_ID(N'[客戶]', N'U') IS NOT NULL
+    DROP TABLE [客戶];
+GO
+
+CREATE TABLE [客戶] (
+    [客戶編號] NCHAR(3)      NOT NULL,
+    [名稱]     NVARCHAR(30) NOT NULL,
+    [身分證號] NCHAR(10)     NOT NULL,
+    [電話]     NVARCHAR(10) NULL,
+    [地址]     NVARCHAR(50) NULL,
+
+    CONSTRAINT [PK_客戶] PRIMARY KEY ([客戶編號]),
+    CONSTRAINT [UQ_客戶_身分證號] UNIQUE ([身分證號]),
+    CONSTRAINT [CK_客戶_客戶編號] CHECK ([客戶編號] LIKE N'[A-Z][0-9][0-9]')
+);
+GO
+```
+
+若老師要求檢查的是**電話格式**，把 CHECK 那行換成：
+
+```sql
+CONSTRAINT [CK_客戶_電話] 
+CHECK ([電話] LIKE N'[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]')
+```
+
+### 4.4 測試插入
+
+```sql
+INSERT INTO [客戶] ([客戶編號], [名稱], [身分證號], [電話], [地址])
+VALUES (N'C01', N'王小明', N'A123456789', N'0912345678', N'台北市');
+GO
+
+SELECT * FROM [客戶];
+GO
+```
+
+若改成插入 `N'C1'`，會被 `CK_客戶_客戶編號` 擋下來，代表 CHECK 有作用。
+
+---
+
+## 五、輸入法與打字防呆快捷鍵
+
+### 5.1 快捷鍵對照
+
+| 快捷鍵 | 作用 | 打 SQL 時 |
+| :--- | :--- | :--- |
+| `Shift`（單鍵） | 在目前輸入法裡切換「中文 ↔ 英文」 | 按一下，看到右下角從「中」變成「英」再打 |
+| `Ctrl + Space` | 直接**關閉/開啟**輸入法（關掉就是純英文） | 最穩，建議進 SSMS 先按這個 |
+| `Win + Space` | 切換已安裝的輸入法/語言 | 電腦有很多輸入法時用 |
+| `Shift + Space` | 切換**全形/半形** | ⚠️ **不要按**，這就是全形英文字的來源 |
+| `Alt + Shift` | 舊版 Windows 切換輸入法 | 新版多半已改成 `Win + Space` |
+
+### 5.2 實際操作流程
+
+1. 在 SSMS 把游標放到查詢視窗。
+2. 按一下 `Ctrl + Space`，讓輸入法關掉（右下角顯示 `ENG` 或「英」）。
+3. 開始打 `CREATE TABLE...`。
+4. 若不小心按到 `Shift + Space`，`SELECT` 會變成 `ＳＥＬＥＣＴ`，再按一次 `Shift + Space` 切回半形。
+
+### 5.3 全形 / 半形常見錯誤
+
+| 很可能打到 | 正確應該是 |
+| :--- | :--- |
+| `（ ）` | `( )` |
+| `，` | `,` |
+| `‘ ’` / `“ ”` | `'` / `"` |
+| `＠` | `@` |
+| `＝` | `=` |
+| `ＳＥＬＥＣＴ` | `SELECT` |
+
+詳細對照表另見 [`SQL_客戶資料表範例.md`](./SQL_客戶資料表範例.md)。
+
+---
+
+*最後更新於 2026-11-19 | 來源：OpenCode 工作階段「資料庫條件約束」*
